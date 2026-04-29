@@ -104,3 +104,6 @@ Because data is fetched sequentially for 85+ ETFs with deliberate delays between
 Due to the volume of requests, it is possible that Yahoo Finance will intermittently fail to return data for one or two individual ETFs in a given run. When this occurs:
 * Any errors will be visible in the **Docker logs**.
 * The **user interface is not affected** — scores are calculated and displayed normally for all ETFs whose data was successfully retrieved.
+
+## Disclaimer: README file written with the help of AI as well to save time and have a more clear, structured writted document/file. The flow/steps/features, issues and everything is all my own think and ideas, outcomes and issues I faced
+
