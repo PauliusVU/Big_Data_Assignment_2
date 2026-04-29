@@ -78,7 +78,7 @@ Once running, the application will be accessible in your browser at `http://loca
 
 ---
 
-## Debugging & Known Issues
+## Debugging & Known Issues faced when adding and trying to run the app on Docker and not on local machine
 
 ### Yahoo Finance Bot Detection & the "Invalid Crumb" Error
 The first run of the application failed entirely — Yahoo Finance identified the outgoing requests as automated bot traffic and blocked all data retrieval.
