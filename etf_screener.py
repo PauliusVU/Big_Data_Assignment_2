@@ -4,6 +4,8 @@ import pandas as pd
 from datetime import datetime
 import urllib.request
 import xml.etree.ElementTree as ET
+import time   
+import random 
 
 # Set global option to avoid downcasting warnings in future Pandas versions
 pd.set_option('future.no_silent_downcasting', True)
@@ -69,6 +71,9 @@ def get_best_sector_etfs():
     for sector, tickers in sector_etfs.items():
         for ticker_symbol in tickers:
             try:
+                # Adding a randomized delay to prevent Yahoo blocking
+                time.sleep(random.uniform(1.5, 3.0))
+
                 ticker = yf.Ticker(ticker_symbol)
                 
                 # Try to get info, but have a fallback
@@ -80,11 +85,13 @@ def get_best_sector_etfs():
                 
                 # Fetch 5-year history in one block, if possible 
                 hist = ticker.history(period="5y", auto_adjust=True)
-                if hist.empty or len(hist) < 21: 
+                
+                # 'hist is None or' added to prevent NoneType subscript crashes!
+                if hist is None or hist.empty or len(hist) < 21: 
                     print(f"Skipping {ticker_symbol} - insufficient history")
                     continue
                 
-                # Grabbding the close price series for performance calculations
+                # Grabbing the close price series for performance calculations
                 close = hist["Close"]
                 # Most recent price
                 current_price = close.iloc[-1]
@@ -163,6 +170,11 @@ def get_best_sector_etfs():
                 continue
     
     df = pd.DataFrame(etf_data)
+
+    # Guard Clause to prevent crash if data fetch fails
+    if df.empty:
+        print("CRITICAL: No data retrieved. Check your internet or API limits.")
+        return pd.DataFrame(), pd.DataFrame(columns=["Category/Sector", "Ticker", "Master Score"])
     
     # Define which metrics are positive (higher is better) and which are negative (lower is better) for the Master Score calculation
     positive_metrics = ["1M Return (%)", "1Y Return (%)", "3Y Return (%)", "5Y Return (%)", "Sharpe Ratio", "Yield (%)"]
@@ -212,7 +224,9 @@ def get_single_etf_data(ticker_symbol):
             info = {}
 
         hist = ticker.history(period="5y", auto_adjust=True)
-        if hist.empty or len(hist) < 21:
+        
+        # 'hist is None or' added to prevent NoneType subscript crashes
+        if hist is None or hist.empty or len(hist) < 21:
             return None 
 
         close = hist["Close"]
