@@ -30,7 +30,7 @@ For every metric of every ETF, the script compares it to the average of the 85+ 
 Z-Score = (ETF Value - Market Average) / Standard Deviation
 
 * If an ETF is exactly average, it gets a score of 0.
-* If an ETF is performing 2 standard deviations better than the group, it gets a +2.0.
+* If an ETT is performing 2 standard deviations better than the group, it gets a +2.0.
 * If an ETF is performing worse than the group, it gets a -1.0.
 
 ### 3. The Final Aggregation
@@ -75,3 +75,32 @@ To pull and run the application directly from Docker Hub, use the following comm
 docker run -p 8501:8501 pauliusvu/etf-screener:v1.0
 ```
 Once running, the application will be accessible in your browser at `http://localhost:8501`.
+
+---
+
+## Debugging & Known Issues
+
+### Yahoo Finance Bot Detection & the "Invalid Crumb" Error
+The first run of the application failed entirely — Yahoo Finance identified the outgoing requests as automated bot traffic and blocked all data retrieval.
+
+**Attempt 1 — Simulating human-like behaviour:** With AI assistance, changes were made to the codebase to introduce delays between requests and to present the client as a more legitimate browser session. The Docker image was rebuilt and rerun. Errors persisted.
+
+**Attempt 2 — Diagnosing the root cause:** Further investigation, again with AI assistance, revealed the following error being returned directly from Yahoo Finance:
+```json
+{"finance":{"result":null,"error":{"code":"Unauthorized","description":"Invalid Crumb"}}}
+```
+This triggered an extensive debugging process. Numerous changes were made to `etf_screener.py` in an effort to spoof a legitimate user session to Yahoo's servers. Despite this, the issue could not be resolved through request header manipulation alone.
+
+**Resolution — Dependency versioning:** The root cause was ultimately identified as an outdated version of the `yfinance` library. A pinned older version had been deliberately chosen for stability, but it lacked the authentication handling required by Yahoo's current API. Two dependency fixes resolved the issue:
+1. Upgrading `yfinance` to a current version.
+2. Adding `curl_cffi>=0.7.0` to `requirements.txt`, which provides the modern TLS fingerprinting that Yahoo Finance expects.
+
+With the correct dependencies in place, the codebase was reverted close to its original form, retaining only the request time delays introduced in Attempt 1 to avoid triggering Yahoo's rate limiter.
+
+### Expected Load Time
+Because data is fetched sequentially for 85+ ETFs with deliberate delays between each request, **the initial data load takes several minutes** rather than seconds. This is expected behaviour and is the trade-off for maintaining reliable access to Yahoo Finance.
+
+### Occasional Single-ETF Fetch Failures
+Due to the volume of requests, it is possible that Yahoo Finance will intermittently fail to return data for one or two individual ETFs in a given run. When this occurs:
+* Any errors will be visible in the **Docker logs**.
+* The **user interface is not affected** — scores are calculated and displayed normally for all ETFs whose data was successfully retrieved.
