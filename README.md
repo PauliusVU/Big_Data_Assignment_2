@@ -76,6 +76,8 @@ docker run -p 8501:8501 pauliusvu/etf-screener:v1.0
 ```
 Once running, the application will be accessible in your browser at `http://localhost:8501`.
 
+Link to the Docker itself - `https://hub.docker.com/r/pauliusvu/etf-screener`.
+
 ---
 
 ## Debugging & Known Issues faced when adding and trying to run the app on Docker and not on local machine
